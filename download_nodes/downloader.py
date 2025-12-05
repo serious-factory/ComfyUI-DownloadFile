@@ -55,13 +55,21 @@ def _is_blocked_ip(hostname: str) -> bool:
 
 def _validate_url(url: str) -> str:
     parsed = urlparse(url)
-    if parsed.scheme not in {"http", "https"} or not parsed.netloc:
-        raise ValueError("URL must be http/https with a host")
-
-    if _is_blocked_ip(parsed.hostname):
-        raise ValueError("Refusing to access private or invalid host")
-
-    return url
+    # Accept http/https with host
+    if parsed.scheme in {"http", "https"} and parsed.netloc:
+        if _is_blocked_ip(parsed.hostname):
+            raise ValueError("Refusing to access private or invalid host")
+        return url
+    # Accept file:// or plain local paths
+    if parsed.scheme == "file":
+        path = parsed.path
+    elif parsed.scheme == "" and parsed.netloc == "" and os.path.exists(url):
+        path = url
+    else:
+        raise ValueError("URL must be http/https with a host or an existing local path")
+    if not os.path.exists(path):
+        raise ValueError(f"Local file not found: {path}")
+    return path
 
 
 def _download_to_temp(url: str, max_bytes: int, timeout: tuple[float, float]):
@@ -152,7 +160,12 @@ class DownloadFile:
         timeout = (5.0, 15.0)
         max_bytes = max_mb * 1024 * 1024
         try:
-            temp_path, content_type = _download_to_temp(safe_url, max_bytes=max_bytes, timeout=timeout)
+            if safe_url.startswith("http"):
+                temp_path, content_type = _download_to_temp(safe_url, max_bytes=max_bytes, timeout=timeout)
+            else:
+                # Local file path
+                temp_path = safe_url
+                content_type = mimetypes.guess_type(temp_path)[0] or ""
         except Exception as e:
             raise ValueError(f"DownloadFile error: {e}")
 
