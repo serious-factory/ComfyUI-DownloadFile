@@ -1,29 +1,29 @@
 # ComfyUI - Download File
 
-Un seul nœud ComfyUI pour télécharger un fichier image ou audio via URL, l’enregistrer dans le dossier temporaire et le renvoyer sous forme de tenseur (`IMAGE`/`AUDIO`) ou chemin de fichier.
+A single ComfyUI node to securely download an image or audio file from a URL, store it in the temp directory, and return it as an `IMAGE`/`AUDIO` tensor plus file path.
 
 ## Installation
-1. Copier ce dépôt dans `ComfyUI/custom_nodes` :
+1. Clone into `ComfyUI/custom_nodes`:
    ```bash
    cd ComfyUI/custom_nodes
-   git clone https://github.com/your-org/comfyui-downloadfile.git
+   git clone https://github.com/serious-factory/ComfyUI-DownloadFile.git
    ```
-2. Installer les dépendances :
+2. Install dependencies:
    ```bash
    pip install -r requirements.txt
    ```
-3. Relancer ComfyUI.
+3. Restart ComfyUI.
 
-## Usage rapide
-- Ajoutez le nœud **Download File**.
-- Renseignez une URL HTTP/HTTPS pointant vers une image (`jpg/png/webp/gif`) ou un audio (`mp3/wav/flac/ogg/m4a`).
-- Optionnel : `expect_type` (auto/image/audio) pour forcer le type attendu, `max_mb` pour limiter la taille (par défaut 50 MB).
-- Branchez la sortie `IMAGE` vers vos nœuds image, ou `AUDIO` vers vos nœuds audio. La sortie `filepath` donne le fichier téléchargé dans le répertoire temporaire ComfyUI.
+## Quick usage
+- Add the **Download File** node (category `Utilities/Download`).
+- Provide an HTTP/HTTPS URL to an image (`jpg/png/webp/gif`) or audio file (`mp3/wav/flac/ogg/m4a`).
+- Optional: `expect_type` (auto/image/audio) to force the expected type, `max_mb` to cap size (default 50 MB).
+- Wire `IMAGE` to image nodes or `AUDIO` to audio nodes. `filepath` points to the downloaded file in ComfyUI temp.
 
-## Sécurité intégrée
-- Filtrage HTTP/HTTPS uniquement, blocage des hôtes privés/loopback pour éviter le SSRF.
-- Timeouts (connexion/lecture) et limite de taille configurable.
-- Whitelist MIME/extension pour images et audio ; types non supportés rejetés.
+## Built-in safety
+- HTTP/HTTPS only, blocks private/loopback hosts to reduce SSRF risk.
+- Connection/read timeouts and configurable size limit.
+- MIME/extension allowlist for images and audio; unsupported types are rejected.
 
-## Dépendances principales
-- `requests`, `torch`, `torchaudio`, `pillow`, `numpy` (ComfyUI fournit `folder_paths`).
+## Core dependencies
+- `requests`, `torch`, `torchaudio`, `pillow`, `numpy` (ComfyUI provides `folder_paths`).

@@ -123,7 +123,7 @@ def _load_audio(path: str):
     return {"waveform": waveform.unsqueeze(0), "sample_rate": sample_rate}
 
 
-class MediaUtilities_DownloadFile:
+class DownloadFile:
     @classmethod
     def INPUT_TYPES(cls):
         return {
@@ -139,7 +139,7 @@ class MediaUtilities_DownloadFile:
     RETURN_TYPES = ("IMAGE", "AUDIO", "STRING", "STRING")
     RETURN_NAMES = ("image", "audio", "filepath", "mime")
     FUNCTION = "download_file"
-    CATEGORY = "MediaUtilities/Download"
+    CATEGORY = "Utilities/Download"
 
     def download_file(self, url, expect_type="auto", max_mb=50):
         empty_image = torch.zeros((1, 1, 1, 3), dtype=torch.float32)
@@ -183,9 +183,9 @@ class MediaUtilities_DownloadFile:
 
 
 NODE_CLASS_MAPPINGS = {
-    "MediaUtilities_DownloadFile": MediaUtilities_DownloadFile,
+    "DownloadFile": DownloadFile,
 }
 
 NODE_DISPLAY_NAME_MAPPINGS = {
-    "MediaUtilities_DownloadFile": "Download File",
+    "DownloadFile": "Download File",
 }
