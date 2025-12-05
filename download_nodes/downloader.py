@@ -60,11 +60,16 @@ def _validate_url(url: str) -> str:
         if _is_blocked_ip(parsed.hostname):
             raise ValueError("Refusing to access private or invalid host")
         return url
-    # Accept file:// or plain local paths
+    # Accept file:// or local paths (absolute or relative to ComfyUI input dir)
     if parsed.scheme == "file":
         path = parsed.path
-    elif parsed.scheme == "" and parsed.netloc == "" and os.path.exists(url):
-        path = url
+    elif parsed.scheme == "" and parsed.netloc == "":
+        # First try as-is, then relative to input directory
+        if os.path.exists(url):
+            path = url
+        else:
+            candidate = os.path.join(folder_paths.get_input_directory(), url)
+            path = candidate if os.path.exists(candidate) else url
     else:
         raise ValueError("URL must be http/https with a host or an existing local path")
     if not os.path.exists(path):
