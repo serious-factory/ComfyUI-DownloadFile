@@ -20,6 +20,8 @@ A single ComfyUI node to securely download an image or audio file from a URL, st
 - Optional: `expect_type` (auto/image/audio) to force the expected type, `max_mb` to cap size (default 50 MB).
 - Wire `IMAGE` to image nodes or `AUDIO` to audio nodes. `filepath` points to the downloaded file in ComfyUI temp.
 
+![Download File node screenshot](./download_file_node_screenshot.png)
+
 ## Built-in safety
 - HTTP/HTTPS only, blocks private/loopback hosts to reduce SSRF risk.
 - Connection/read timeouts and configurable size limit.

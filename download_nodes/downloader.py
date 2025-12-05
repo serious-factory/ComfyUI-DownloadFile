@@ -65,7 +65,10 @@ def _validate_url(url: str) -> str:
 
 
 def _download_to_temp(url: str, max_bytes: int, timeout: tuple[float, float]):
-    response = requests.get(url, stream=True, timeout=timeout, allow_redirects=True)
+    headers = {
+        "User-Agent": "ComfyUI-DownloadFile/1.0 (+https://github.com/serious-factory/ComfyUI-DownloadFile)"
+    }
+    response = requests.get(url, stream=True, timeout=timeout, allow_redirects=True, headers=headers)
     response.raise_for_status()
 
     content_type = response.headers.get("content-type", "").split(";")[0].strip().lower()
@@ -145,41 +148,39 @@ class DownloadFile:
         empty_image = torch.zeros((1, 1, 1, 3), dtype=torch.float32)
         empty_audio = {"waveform": torch.zeros((1, 1, 1)), "sample_rate": 44100}
 
+        safe_url = _validate_url(url)
+        timeout = (5.0, 15.0)
+        max_bytes = max_mb * 1024 * 1024
         try:
-            safe_url = _validate_url(url)
-            timeout = (5.0, 15.0)
-            max_bytes = max_mb * 1024 * 1024
             temp_path, content_type = _download_to_temp(safe_url, max_bytes=max_bytes, timeout=timeout)
-
-            ext = os.path.splitext(temp_path)[1].lower()
-
-            def is_image():
-                if expect_type == "image":
-                    return True
-                if content_type in ALLOWED_IMAGE_MIMES:
-                    return True
-                return ext in ALLOWED_IMAGE_EXTS
-
-            def is_audio():
-                if expect_type == "audio":
-                    return True
-                if content_type in ALLOWED_AUDIO_MIMES:
-                    return True
-                return ext in ALLOWED_AUDIO_EXTS
-
-            if is_image():
-                image = _load_image(temp_path)
-                return (image, empty_audio, temp_path, content_type or "")
-
-            if is_audio():
-                audio = _load_audio(temp_path)
-                return (empty_image, audio, temp_path, content_type or "")
-
-            raise ValueError("Unsupported file type; only image/audio are allowed")
-
         except Exception as e:
-            print(f"[DownloadFile] Error: {str(e)}")
-            return (empty_image, empty_audio, "", "")
+            raise ValueError(f"DownloadFile error: {e}")
+
+        ext = os.path.splitext(temp_path)[1].lower()
+
+        def is_image():
+            if expect_type == "image":
+                return True
+            if content_type in ALLOWED_IMAGE_MIMES:
+                return True
+            return ext in ALLOWED_IMAGE_EXTS
+
+        def is_audio():
+            if expect_type == "audio":
+                return True
+            if content_type in ALLOWED_AUDIO_MIMES:
+                return True
+            return ext in ALLOWED_AUDIO_EXTS
+
+        if is_image():
+            image = _load_image(temp_path)
+            return (image, empty_audio, temp_path, content_type or "")
+
+        if is_audio():
+            audio = _load_audio(temp_path)
+            return (empty_image, audio, temp_path, content_type or "")
+
+        raise ValueError("Unsupported file type; only image/audio are allowed")
 
 
 NODE_CLASS_MAPPINGS = {
