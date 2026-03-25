@@ -8,7 +8,7 @@ from urllib.parse import urlparse
 import numpy as np
 import requests
 import torch
-import torchaudio
+import av
 from PIL import Image
 
 import folder_paths
@@ -135,7 +135,34 @@ def _load_image(path: str):
 
 
 def _load_audio(path: str):
-    waveform, sample_rate = torchaudio.load(path)
+    with av.open(path) as af:
+        if not af.streams.audio:
+            raise ValueError("No audio stream found in the file.")
+
+        stream = af.streams.audio[0]
+        sample_rate = stream.codec_context.sample_rate
+        channels = stream.channels
+
+        frames = []
+        for frame in af.decode(streams=stream.index):
+            buf = torch.from_numpy(frame.to_ndarray())
+            if buf.shape[0] != channels:
+                buf = buf.view(-1, channels).t()
+            frames.append(buf)
+
+        if not frames:
+            raise ValueError("No audio frames decoded.")
+
+        waveform = torch.cat(frames, dim=1)
+        if waveform.dtype.is_floating_point:
+            waveform = waveform.float()
+        elif waveform.dtype == torch.int16:
+            waveform = waveform.float() / (2 ** 15)
+        elif waveform.dtype == torch.int32:
+            waveform = waveform.float() / (2 ** 31)
+        else:
+            raise ValueError(f"Unsupported wav dtype: {waveform.dtype}")
+
     return {"waveform": waveform.unsqueeze(0), "sample_rate": sample_rate}
 
 
